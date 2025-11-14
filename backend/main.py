@@ -1,13 +1,27 @@
 from fastapi import FastAPI
-from .api import participants, places, votes  # Импортируем роутеры
+from .api import trips, auth, participants, places, votes
 
-app = FastAPI(title="TripTie API", version="0.1.0")
+app = FastAPI(
+    title="TripTie API",
+    description="MVP бэкенд для планирования совместных поездок",
+    version="0.1.0"
+)
 
-# Подключаем роутеры
-app.include_router(participants.router, prefix="/api", tags=["participants"])
-app.include_router(places.router, prefix="/api", tags=["places"])
-app.include_router(votes.router, prefix="/api", tags=["votes"])
+# Подключаем все роутеры
+app.include_router(trips.router)
+app.include_router(auth.router)
+app.include_router(participants.router)
+app.include_router(places.router)
+app.include_router(votes.router)
 
 @app.get("/")
-def root():
-    return {"message": "Welcome to TripTie API"}
+def home():
+    return {
+        "status": " API работает",
+        "docs": "/docs",
+        "team": ["Ира — БД", "Ilyana — auth + trips", "Alina — participants + places + votes"]
+    }
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "backend": "FastAPI", "database": "PostgreSQL"}
