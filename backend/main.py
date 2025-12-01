@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api import trips, auth, participants, places, votes
+from backend.api import trips, auth, participants, places, votes
 
 app = FastAPI(
     title="TripTie API",
