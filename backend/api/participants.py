@@ -1,14 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import schemas, crud, database
+from ..database import get_db
+from ..crud.participants import join_trip_by_code
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/trips", tags=["participants"])
 
+class JoinRequest(BaseModel):
+    join_code: str
+
 @router.post("/join")
-def join_trip(data: schemas.ParticipantCreate, db: Session = Depends(database.get_db)):
-    trip = crud.participants.get_trip_by_join_code(db, data.join_code)
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    # TODO: получить current_user.id из JWT
-    result = crud.participants.create_participant(db, user_id=2, trip_id=trip.id)
-    return {"trip_id": trip.id, "joined_at": result["joined_at"]}
+def join_trip(request: JoinRequest, db: Session = Depends(get_db)):
+    try:
+        result = join_trip_by_code(db, user_id=2, join_code=request.join_code)
+        return {"status": "Присоединился", "data": result}
+    except ValueError as e:
+        raise HTTPException(400, str(e))

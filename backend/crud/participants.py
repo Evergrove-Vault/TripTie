@@ -1,18 +1,21 @@
-
 from sqlalchemy.orm import Session
+from database.models.models import trip_members
 from datetime import datetime
-from .. import models
 
-def get_trip_by_join_code(db: Session, join_code: str):
-    return db.query(models.Trip).filter(models.Trip.join_code == join_code).first()
-
-def create_participant(db: Session, user_id: int, trip_id: int):
-    # Используем промежуточную таблицу trip_members
-    stmt = models.trip_members.insert().values(
-        trip_id=trip_id,
-        user_id=user_id,
-        joined_at=datetime.utcnow()
+def join_trip_by_code(db: Session, user_id: int, join_code: str):
+    trip = db.execute(
+        "SELECT id FROM trips WHERE join_code = :code",
+        {"code": join_code}
+    ).fetchone()
+    if not trip:
+        raise ValueError("Trip not found")
+    
+    db.execute(
+        trip_members.insert().values(
+            trip_id=trip.id,
+            user_id=user_id,
+            joined_at=datetime.utcnow()
+        )
     )
-    db.execute(stmt)
     db.commit()
-    return {"user_id": user_id, "trip_id": trip_id, "joined_at": datetime.utcnow()}
+    return {"trip_id": trip.id}
