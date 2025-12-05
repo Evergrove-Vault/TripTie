@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..crud.trips import create_trip
 from ..schemas import TripCreate, Trip
+from database.models.models import Trip as TripModel
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -12,4 +13,4 @@ def create_trip_api(trip: TripCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[Trip])
 def get_trips(db: Session = Depends(get_db)):
-    return db.query(Trip).limit(5).all()
+    return db.query(TripModel).limit(5).all()
