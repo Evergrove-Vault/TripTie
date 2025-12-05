@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from .api import trips, auth, participants, places, votes
-
+#from .api import trips, auth, participants, places, votes
+from .api import participants, places
 app = FastAPI(
     title="TripTie API",
     description="MVP бэкенд для планирования совместных поездок",
@@ -8,11 +8,11 @@ app = FastAPI(
 )
 
 # Подключаем все роутеры
-app.include_router(trips.router)
-app.include_router(auth.router)
+#app.include_router(trips.router)
+#app.include_router(auth.router)
 app.include_router(participants.router)
 app.include_router(places.router)
-app.include_router(votes.router)
+#app.include_router(votes.router)
 
 @app.get("/")
 def home():
