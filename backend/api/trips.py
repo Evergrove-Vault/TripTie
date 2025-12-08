@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..crud.trips import create_trip
-from ..schemas import TripCreate, Trip
+from database.config.database import get_db
+from crud.trips import create_trip
+from schemas import TripCreate, Trip
 from database.models.models import Trip as TripModel
 
 router = APIRouter(prefix="/trips", tags=["trips"])

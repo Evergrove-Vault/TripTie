@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import OperationalError, DatabaseError, SQLAlchemyError, IntegrityError
-from ..database import get_db
-from ..crud.participants import join_trip_by_code
 from pydantic import BaseModel
+from database.config.database import get_db
+from crud.participants import join_trip_by_code
 
 router = APIRouter(prefix="/trips", tags=["participants"])
 
