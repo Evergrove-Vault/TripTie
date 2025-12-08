@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api import trips, auth, participants, places, votes
+from api import trips, auth, participants, places, votes
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,7 +35,7 @@ def home():
 
 @app.get("/health")
 def health_check():
-    from .database import check_db_connection
+    from database.config.database import check_db_connection
     
     db_connected, db_status = check_db_connection()
     
