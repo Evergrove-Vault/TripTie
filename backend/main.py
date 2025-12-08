@@ -3,7 +3,6 @@ from .api import trips, auth, participants, places, votes
 
 from fastapi.middleware.cors import CORSMiddleware
 
-# from .api import participants, places
 app = FastAPI(
     title="TripTie API",
     description="MVP бэкенд для планирования совместных поездок",
@@ -36,4 +35,16 @@ def home():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "backend": "FastAPI", "database": "PostgreSQL"}
+    from .database import check_db_connection
+    
+    db_connected, db_status = check_db_connection()
+    
+    return {
+        "status": "healthy" if db_connected else "degraded",
+        "backend": "FastAPI",
+        "database": {
+            "type": "PostgreSQL",
+            "status": db_status,
+            "connected": db_connected
+        }
+    }
