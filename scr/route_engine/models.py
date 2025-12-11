@@ -1,23 +1,21 @@
+# models.py
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 class Preferences(BaseModel):
-    city: str = Field("Нижний Новгород")
+    city: str
     interests: List[str]
-    budget: Optional[str] = "средний"
-    pace: Optional[str] = "спокойный"
-    duration: Optional[str] = "1 день"
-    activity_level: Optional[str] = "нормально"
-    group: Optional[str] = "пара"
-
-class RouteItem(BaseModel):
-    time: str
-    place: str
-    description: str
+    budget: str = "средний"
+    pace: str = "умеренный"
+    duration: str = "1 день"
+    activity_level: str = "средний"
+    group: str = "соло"
+    days: Optional[int] = Field(default=1, description="Количество дней маршрута")
 
 class RouteResponse(BaseModel):
-    route: List[RouteItem]
-    summary: Optional[str]
-    estimated_cost: Optional[str]
-    reasoning: Optional[str]
-    tips: Optional[List[str]]
+    route: List[Dict[str, Any]]
+    summary: str
+    estimated_cost: str
+    reasoning: str
+    tips: List[str]
+    map_config: Optional[Dict[str, Any]] = None
