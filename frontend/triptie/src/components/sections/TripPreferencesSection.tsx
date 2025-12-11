@@ -15,12 +15,16 @@ export default function TripPreferencesSection() {
         </div>
       </div>
 
-      <div className={`${styles.grid} ${styles.gridTwo}`}>
-        <div>
+      <div className={`${styles.grid}`}>
+        <div style={{width: '60%'}}>
           <h3 className={styles.sectionSubtitle}>Активности</h3>
-          <div className={styles.chips} id="activitiesList"></div>
+          <input
+            type="text"
+            className={styles.inputBudget}
+            placeholder="Например, аквапарк"
+          />
         </div>
-        <div>
+        <div style={{width: '60%'}}>
           <h3 className={styles.sectionSubtitle}>Бюджет</h3>
           <input
             type="number"

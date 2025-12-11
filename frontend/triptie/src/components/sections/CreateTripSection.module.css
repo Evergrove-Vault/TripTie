@@ -38,9 +38,10 @@
 }
 
 .formGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  width: 100%;
 }
 
 .formField {
@@ -93,6 +94,7 @@
   border-radius: 12px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
+  width: 20%;
 }
 
 .btn:hover {

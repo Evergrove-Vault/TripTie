@@ -7,7 +7,6 @@ export default function ProfileSection() {
         <div>
           <p className={styles.eyebrow}>Профиль</p>
           <h2 className={styles.sectionTitle}>Личный кабинет</h2>
-          <p className={styles.subtext}>Данные хранятся локально в браузере.</p>
         </div>
       </div>
       <form className={styles.formGrid}>
@@ -65,10 +64,7 @@ export default function ProfileSection() {
           <button className={`${styles.btn} ${styles.primary}`} type="submit">
             Сохранить
           </button>
-          <span className={styles.hint}>Сохраняется в localStorage</span>
         </div>
-
-        <div className={styles.feedback} id="profileMsg"></div>
       </form>
     </section>
   );

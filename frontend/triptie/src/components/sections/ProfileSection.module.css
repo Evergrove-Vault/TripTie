@@ -5,14 +5,14 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.04);
   border: 1px solid #ffe1ef;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 .sectionHeader {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
-  flex-wrap: wrap;
   margin-bottom: 24px;
 }
 
@@ -22,6 +22,7 @@
   letter-spacing: 1px;
   color: #d6007a;
   margin: 0;
+  text-align: center;
 }
 
 .sectionTitle {
@@ -29,18 +30,26 @@
   font-size: 24px;
   font-weight: 700;
   color: #1d1d1f;
+  text-align: center;
 }
 
 .subtext {
   color: #3d3d3f;
   margin: 8px 0 0;
   font-size: 15px;
+  text-align: center;
 }
 
 .formGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
+  width: 70%;
   gap: 14px;
+  background-color:#ffd2e7;
+  padding: 20px;
+  border-radius: 20px;
+  margin: 0 auto;
+  justify-content: space-between;
 }
 
 .formField {
@@ -75,7 +84,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
 }
 
 .btn {
@@ -85,6 +95,7 @@
   border-radius: 12px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
+  width: 100%;
 }
 
 .btn:hover {
