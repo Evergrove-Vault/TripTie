@@ -22,14 +22,45 @@ interface ParticipantPreference {
   is_creator: boolean;
 }
 
+interface RoutePoint {
+  id?: string;
+  time?: string;
+  place: string;
+  description?: string;
+  day: number;
+  order?: number;
+  coordinates?: { lat: number; lon: number };
+}
+
+interface GeneratedRoute {
+  trip_id: number;
+  route: RoutePoint[];
+  summary: string;
+  estimated_cost: string;
+  reasoning: string;
+  tips: string[];
+  map_config?: {
+    center: { lat: number; lon: number };
+    zoom: number;
+    bounds?: {
+      north: number;
+      south: number;
+      east: number;
+      west: number;
+    };
+  };
+}
+
 export default function FinalPlanSection() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tripId, setTripId] = useState<number | null>(null);
   const [mergedPreferences, setMergedPreferences] = useState<MergedPreferences | null>(null);
   const [allParticipantsPreferences, setAllParticipantsPreferences] = useState<ParticipantPreference[]>([]);
+  const [generatedRoute, setGeneratedRoute] = useState<GeneratedRoute | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Получаем trip_id из URL параметров
@@ -111,6 +142,42 @@ export default function FinalPlanSection() {
     }
   };
 
+  const generateRoute = async () => {
+    if (!tripId) return;
+    
+    setIsGeneratingRoute(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/route/generate/${tripId}`, {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setGeneratedRoute(data);
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Ошибка генерации маршрута' }));
+        setError(errorData.detail || 'Не удалось сгенерировать маршрут');
+      }
+    } catch (error) {
+      setError('Ошибка подключения к серверу');
+      console.error('Ошибка генерации маршрута:', error);
+    } finally {
+      setIsGeneratingRoute(false);
+    }
+  };
+
+  // Группируем маршрут по дням
+  const routeByDays = generatedRoute?.route.reduce((acc, point) => {
+    const day = point.day || 1;
+    if (!acc[day]) {
+      acc[day] = [];
+    }
+    acc[day].push(point);
+    return acc;
+  }, {} as Record<number, RoutePoint[]>) || {};
+
   return (
     <section id="final" className={styles.card}>
       <div className={styles.sectionHeader}>
@@ -125,14 +192,41 @@ export default function FinalPlanSection() {
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {tripId && (
+            <>
+              <button 
+                className={`${styles.btn} ${styles.ghost}`}
+                onClick={() => router.push(`/trip-details?trip=${tripId}`)}
+              >
+                Подробнее о поездке
+              </button>
+              <button 
+                className={styles.btn}
+                onClick={generateRoute}
+                disabled={isGeneratingRoute}
+                style={{
+                  background: isGeneratingRoute ? '#ccc' : '#d6007a',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: isGeneratingRoute ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isGeneratingRoute ? 'Генерация...' : 'Сгенерировать маршрут'}
+              </button>
+            </>
+          )}
+          {generatedRoute && (
             <button 
               className={`${styles.btn} ${styles.ghost}`}
-              onClick={() => router.push(`/trip-details?trip=${tripId}`)}
+              onClick={() => {
+                if (confirm('Вы уверены, что хотите удалить текущий маршрут? Вы сможете сгенерировать новый.')) {
+                  setGeneratedRoute(null);
+                }
+              }}
+              disabled={isGeneratingRoute}
             >
-              Подробнее о поездке
+              Удалить маршрут
             </button>
           )}
-          <button className={`${styles.btn} ${styles.ghost}`}>Изменить маршрут</button>
         </div>
       </div>
 
@@ -423,6 +517,151 @@ export default function FinalPlanSection() {
               </div>
             </div>
           ) : null}
+        </div>
+      )}
+
+      {/* Сгенерированный маршрут */}
+      {generatedRoute && (
+        <div style={{ marginTop: '24px' }}>
+          <div style={{
+            background: '#f8f9fa',
+            borderRadius: '12px',
+            padding: '24px',
+            border: '1px solid #ffe1ef'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: 600, 
+              color: '#1d1d1f' 
+            }}>
+              Сгенерированный маршрут
+            </h3>
+            
+            {generatedRoute.summary && (
+              <p style={{ 
+                margin: '0 0 12px 0', 
+                fontSize: '16px', 
+                color: '#666',
+                lineHeight: '1.6'
+              }}>
+                {generatedRoute.summary}
+              </p>
+            )}
+            
+            {generatedRoute.estimated_cost && (
+              <div style={{ 
+                marginBottom: '16px',
+                padding: '12px',
+                background: '#fff',
+                borderRadius: '8px',
+                border: '1px solid #ffe1ef'
+              }}>
+                <strong style={{ color: '#d6007a' }}>Примерная стоимость:</strong> {generatedRoute.estimated_cost}
+              </div>
+            )}
+            
+            {/* Маршрут по дням */}
+            {Object.keys(routeByDays).length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {Object.entries(routeByDays)
+                  .sort(([a], [b]) => Number(a) - Number(b))
+                  .map(([day, points]) => (
+                    <div key={day} style={{
+                      background: '#fff',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      border: '1px solid #ffe1ef'
+                    }}>
+                      <h4 style={{ 
+                        margin: '0 0 16px 0', 
+                        fontSize: '18px', 
+                        fontWeight: 600, 
+                        color: '#d6007a',
+                        borderBottom: '2px solid #ffe1ef',
+                        paddingBottom: '8px'
+                      }}>
+                        День {day}
+                      </h4>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {points
+                          .sort((a, b) => (a.order || 0) - (b.order || 0))
+                          .map((point, index) => (
+                            <div key={point.id || index} style={{
+                              display: 'flex',
+                              gap: '12px',
+                              padding: '12px',
+                              background: '#f8f9fa',
+                              borderRadius: '8px'
+                            }}>
+                              {point.time && (
+                                <div style={{
+                                  minWidth: '60px',
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  color: '#d6007a'
+                                }}>
+                                  {point.time}
+                                </div>
+                              )}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: 600, 
+                                  color: '#1d1d1f',
+                                  marginBottom: '4px'
+                                }}>
+                                  {point.place}
+                                </div>
+                                {point.description && (
+                                  <div style={{ 
+                                    fontSize: '14px', 
+                                    color: '#666',
+                                    lineHeight: '1.5'
+                                  }}>
+                                    {point.description}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+            
+            {/* Советы */}
+            {generatedRoute.tips && generatedRoute.tips.length > 0 && (
+              <div style={{ 
+                marginTop: '20px',
+                padding: '16px',
+                background: '#fff3f3',
+                borderRadius: '8px',
+                border: '1px solid #ffc4df'
+              }}>
+                <h4 style={{ 
+                  margin: '0 0 12px 0', 
+                  fontSize: '16px', 
+                  fontWeight: 600, 
+                  color: '#1d1d1f' 
+                }}>
+                  💡 Советы
+                </h4>
+                <ul style={{ 
+                  margin: 0, 
+                  paddingLeft: '20px',
+                  color: '#666',
+                  lineHeight: '1.8'
+                }}>
+                  {generatedRoute.tips.map((tip, index) => (
+                    <li key={index}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
