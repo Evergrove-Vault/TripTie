@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, DatabaseError, SQLAlchemyError
 from ..database import get_db
-from ..schemas import TripPreferencesCreate, TripPreferencesResponse, MergedTripPreferencesResponse
-from ..crud.preferences import save_user_preferences, get_user_preferences, get_merged_preferences
+from ..schemas import TripPreferencesCreate, TripPreferencesResponse, MergedTripPreferencesResponse, ParticipantPreferencesResponse
+from ..crud.preferences import save_user_preferences, get_user_preferences, get_merged_preferences, get_all_participants_preferences
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
 
@@ -97,5 +97,26 @@ def get_merged_preferences_for_trip(
         raise HTTPException(
             status_code=500,
             detail=f"Ошибка при получении объединенных предпочтений: {str(e)}"
+        )
+
+
+@router.get("/trip/{trip_id}/all", response_model=list[ParticipantPreferencesResponse])
+def get_all_participants_preferences_for_trip(
+    trip_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Получает предпочтения всех участников поездки с их именами.
+    Возвращает список предпочтений каждого участника отдельно.
+    """
+    try:
+        result = get_all_participants_preferences(db, trip_id)
+        return [ParticipantPreferencesResponse(**item) for item in result]
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при получении предпочтений участников: {str(e)}"
         )
 

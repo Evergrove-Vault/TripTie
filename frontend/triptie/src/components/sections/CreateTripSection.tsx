@@ -108,7 +108,7 @@ export default function CreateTripSection() {
       
       const errorStr = String(error);
       const errorMessage = errorStr.includes('Failed to fetch') || errorStr.includes('NetworkError') || errorStr.includes('ERR_CONNECTION_REFUSED')
-        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8001.'
+        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8000.'
         : `Ошибка подключения к серверу: ${errorStr}`;
       setMessage({ type: 'error', text: errorMessage });
       setIsLoading(false);
