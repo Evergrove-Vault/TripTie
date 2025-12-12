@@ -16,14 +16,53 @@ export default function DashboardSection() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'done'>('all');
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    loadTrips();
+    // Загружаем user_id из localStorage
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setUserId(user.id);
+        } catch (e) {
+          console.error('Ошибка при чтении данных пользователя:', e);
+        }
+      }
+    }
   }, []);
 
+  useEffect(() => {
+    if (userId) {
+      loadTrips();
+    } else {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  // Слушаем события обновления поездок
+  useEffect(() => {
+    const handleTripsUpdate = () => {
+      if (userId) {
+        loadTrips();
+      }
+    };
+
+    window.addEventListener('tripsUpdated', handleTripsUpdate);
+    window.addEventListener('userUpdated', handleTripsUpdate);
+
+    return () => {
+      window.removeEventListener('tripsUpdated', handleTripsUpdate);
+      window.removeEventListener('userUpdated', handleTripsUpdate);
+    };
+  }, [userId]);
+
   const loadTrips = async () => {
+    if (!userId) return;
+    
     try {
-      const response = await fetch('http://127.0.0.1:8001/trips/');
+      const response = await fetch(`/api/trips/?user_id=${userId}`);
       if (response.ok) {
         const data = await response.json();
         setTrips(data);
@@ -69,13 +108,13 @@ export default function DashboardSection() {
         <Link href="/create" className={`${styles.btn} ${styles.primary}`}>
           Создать поездку
         </Link>
-        <div className={styles.joinInline}>
-          <input type="text" className={styles.joinInput} placeholder="Код поездки" />
-          <button className={styles.btn}>Присоединиться</button>
-        </div>
       </div>
       {isLoading ? (
         <div className={styles.empty}>Загрузка...</div>
+      ) : !userId ? (
+        <div className={styles.empty}>
+          Войдите в аккаунт, чтобы увидеть свои поездки.
+        </div>
       ) : filteredTrips.length === 0 ? (
         <div className={styles.empty}>
           Пока нет поездок. Создайте новую или введите код для присоединения.

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.context import CryptContext
-from .api import trips, auth, participants, places, votes
+from .api import trips, auth, participants, places, votes, preferences
 from database.config.database import Base, engine, SessionLocal
 from database.models.models import City, User
 
@@ -56,6 +56,7 @@ app.include_router(trips.router)
 app.include_router(auth.router)
 app.include_router(participants.router)
 app.include_router(places.router)
+app.include_router(preferences.router)
 # app.include_router(votes.router)
 
 @app.get("/")

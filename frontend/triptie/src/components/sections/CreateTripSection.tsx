@@ -14,7 +14,9 @@ export default function CreateTripSection() {
     setMessage(null);
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
+    // Сохраняем ссылку на форму до асинхронной операции
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const tripData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string || undefined,
@@ -23,29 +25,92 @@ export default function CreateTripSection() {
       end_date: formData.get('end_date') as string || undefined,
     };
 
+    // Получаем user_id из localStorage
+    let currentUserId = null;
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          currentUserId = user.id;
+        } catch (e) {
+          console.error('Ошибка при чтении данных пользователя:', e);
+        }
+      }
+    }
+
+    if (!currentUserId) {
+      setMessage({ type: 'error', text: 'Необходимо войти в аккаунт для создания поездки' });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('http://127.0.0.1:8001/trips/', {
+      console.log('Создание поездки:', tripData);
+      const url = `/api/trips/?user_id=${currentUserId}`;
+      console.log('Отправка запроса на:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(tripData),
       });
+      
+      console.log('Получен ответ:', response.status, response.statusText);
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (e) {
+          setMessage({ type: 'error', text: 'Ошибка при обработке ответа сервера' });
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        const text = await response.text();
+        setMessage({ type: 'error', text: text || 'Ошибка при выполнении запроса' });
+        setIsLoading(false);
+        return;
+      }
 
       if (!response.ok) {
-        setMessage({ type: 'error', text: data.detail || 'Ошибка при создании поездки' });
+        setMessage({ type: 'error', text: data.detail || data.message || 'Ошибка при создании поездки' });
         setIsLoading(false);
         return;
       }
 
       setMessage({ type: 'success', text: `Поездка "${data.name}" создана! Код: ${data.join_code}` });
-      e.currentTarget.reset();
       
+      // Отправляем событие для обновления списка поездок
+      window.dispatchEvent(new Event('tripsUpdated'));
+      
+      // Безопасный сброс формы
+      try {
+        if (form) {
+          form.reset();
+        }
+      } catch (resetError) {
+        console.warn('Не удалось сбросить форму:', resetError);
+      }
+      
+      // Перенаправляем на страницу предпочтений для добавления своих предпочтений
       setTimeout(() => {
-        router.push('/');
+        router.push(`/plan?trip=${data.id}`);
       }, 2000);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Ошибка подключения к серверу' });
+      console.error('Ошибка при создании поездки:', error);
+      console.error('Тип ошибки:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('Сообщение ошибки:', error instanceof Error ? error.message : String(error));
+      console.error('Стек ошибки:', error instanceof Error ? error.stack : 'Нет стека');
+      
+      const errorStr = String(error);
+      const errorMessage = errorStr.includes('Failed to fetch') || errorStr.includes('NetworkError') || errorStr.includes('ERR_CONNECTION_REFUSED')
+        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8001.'
+        : `Ошибка подключения к серверу: ${errorStr}`;
+      setMessage({ type: 'error', text: errorMessage });
       setIsLoading(false);
     }
   };

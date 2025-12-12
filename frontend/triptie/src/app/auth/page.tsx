@@ -11,11 +11,16 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement> | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log('handleSubmit вызван', { username, isRegisterMode, password: password ? '***' : '' });
     setMessage(null);
 
     if (!username || !password) {
+      console.log('Валидация не прошла: пустые поля');
       setMessage({ type: 'error', text: 'Заполните все обязательные поля' });
       return;
     }
@@ -31,10 +36,13 @@ export default function AuthPage() {
     }
 
     try {
-      const url = isRegisterMode ? 'http://127.0.0.1:8001/auth/register' : 'http://127.0.0.1:8001/auth/login';
+      console.log('Начинаем запрос к API...');
+      const url = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
       const body = isRegisterMode
         ? { username, email, password }
         : { username, password };
+      
+      console.log('Отправляем запрос:', { url, body: { ...body, password: '***' } });
 
       const response = await fetch(url, {
         method: 'POST',
@@ -42,10 +50,24 @@ export default function AuthPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (e) {
+          setMessage({ type: 'error', text: 'Ошибка при обработке ответа сервера' });
+          return;
+        }
+      } else {
+        const text = await response.text();
+        setMessage({ type: 'error', text: text || 'Ошибка при выполнении запроса' });
+        return;
+      }
 
       if (!response.ok) {
-        setMessage({ type: 'error', text: data.detail || 'Ошибка при выполнении запроса' });
+        setMessage({ type: 'error', text: data.detail || data.message || 'Ошибка при выполнении запроса' });
         return;
       }
 
@@ -57,20 +79,28 @@ export default function AuthPage() {
 
       // Сохраняем данные пользователя
       localStorage.setItem('user', JSON.stringify(data));
-
-      if (isRegisterMode) {
-        setTimeout(() => {
-          setIsRegisterMode(false);
-          setEmail('');
-          setMessage(null);
-        }, 2000);
-      } else {
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
+      
+      // Проверяем, что данные сохранились
+      const saved = localStorage.getItem('user');
+      if (!saved) {
+        setMessage({ type: 'error', text: 'Ошибка сохранения данных. Попробуйте еще раз.' });
+        return;
       }
+      
+      // Отправляем событие для обновления Header
+      window.dispatchEvent(new Event('userUpdated'));
+
+      // Небольшая задержка для гарантии сохранения
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Ошибка подключения к серверу' });
+      console.error('Ошибка при запросе:', error);
+      const errorStr = String(error);
+      const errorMessage = errorStr.includes('Failed to fetch') || errorStr.includes('NetworkError')
+        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8001. Запустите: uvicorn backend.main:app --reload --port 8001'
+        : `Ошибка подключения к серверу: ${errorStr}`;
+      setMessage({ type: 'error', text: errorMessage });
     }
   };
 
@@ -80,7 +110,7 @@ export default function AuthPage() {
       <main style={{ maxWidth: '600px', margin: '60px auto', padding: '0 16px' }}>
         <div className={styles.card}>
           <h2>{isRegisterMode ? 'Регистрация' : 'Вход'}</h2>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div className={styles.formField}>
               <span className={styles.labelText}>Логин *</span>
               <input
@@ -117,7 +147,16 @@ export default function AuthPage() {
             </div>
 
             <div className={styles.formActions}>
-              <button type="submit" className={`${styles.btn} ${styles.primary}`}>
+              <button 
+                type="button"
+                className={`${styles.btn} ${styles.primary}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Кнопка нажата напрямую');
+                  handleSubmit(e);
+                }}
+              >
                 {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
               </button>
               <button

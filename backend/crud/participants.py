@@ -15,6 +15,10 @@ def join_trip_by_code(db: Session, user_id: int, join_code: str):
     if not user:
         raise ValueError("Пользователь не найден")
     
+    # Проверить, не является ли пользователь создателем поездки
+    if trip.creator_id == user_id:
+        raise ValueError("Вы являетесь создателем этой поездки. Создатель уже является участником.")
+    
     # Проверить, не является ли пользователь уже участником
     stmt = select(trip_members).where(
         and_(
@@ -40,4 +44,4 @@ def join_trip_by_code(db: Session, user_id: int, join_code: str):
         # Если все равно возникает ошибка уникальности (на случай race condition)
         raise ValueError("Вы уже являетесь участником этой поездки")
     
-    return {"trip_id": trip.id}
+    return {"trip_id": trip.id, "trip_name": trip.name}
