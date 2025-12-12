@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_, and_
-from database.models.models import Trip, trip_members
+from database.models.models import Trip, trip_members, User
 import uuid
 from datetime import datetime
 
@@ -23,18 +23,42 @@ def get_user_trips(db: Session, user_id: int):
 def create_trip(db: Session, trip_data: dict):
     # Преобразуем строки дат в объекты date, если они переданы
     trip_data_copy = trip_data.copy()
+    
+    def parse_date(date_str: str):
+        """Парсит дату в различных форматах"""
+        formats = ['%d.%m.%Y', '%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d']
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str, fmt).date()
+            except ValueError:
+                continue
+        raise ValueError(f"Не удалось распарсить дату: {date_str}")
+    
     if 'start_date' in trip_data_copy and trip_data_copy['start_date']:
-        if isinstance(trip_data_copy['start_date'], str):
-            trip_data_copy['start_date'] = datetime.strptime(trip_data_copy['start_date'], '%Y-%m-%d').date()
+        if isinstance(trip_data_copy['start_date'], str) and trip_data_copy['start_date'].strip():
+            try:
+                trip_data_copy['start_date'] = parse_date(trip_data_copy['start_date'])
+            except ValueError as e:
+                # Если не удалось распарсить, удаляем поле
+                trip_data_copy.pop('start_date', None)
     if 'end_date' in trip_data_copy and trip_data_copy['end_date']:
-        if isinstance(trip_data_copy['end_date'], str):
-            trip_data_copy['end_date'] = datetime.strptime(trip_data_copy['end_date'], '%Y-%m-%d').date()
+        if isinstance(trip_data_copy['end_date'], str) and trip_data_copy['end_date'].strip():
+            try:
+                trip_data_copy['end_date'] = parse_date(trip_data_copy['end_date'])
+            except ValueError as e:
+                # Если не удалось распарсить, удаляем поле
+                trip_data_copy.pop('end_date', None)
     
     # creator_id должен быть передан в trip_data
     if 'creator_id' not in trip_data_copy:
         trip_data_copy['creator_id'] = 1  # Fallback для совместимости
     
     creator_id = trip_data_copy['creator_id']
+    
+    # Проверяем, что пользователь существует
+    user = db.query(User).filter(User.id == creator_id).first()
+    if not user:
+        raise ValueError(f"Пользователь с ID {creator_id} не найден в базе данных")
     
     db_trip = Trip(
         join_code=uuid.uuid4().hex[:10].upper(),

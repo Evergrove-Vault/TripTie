@@ -17,12 +17,14 @@ export default function CreateTripSection() {
     // Сохраняем ссылку на форму до асинхронной операции
     const form = e.currentTarget;
     const formData = new FormData(form);
+    const startDate = formData.get('start_date') as string;
+    const endDate = formData.get('end_date') as string;
     const tripData = {
       name: formData.get('name') as string,
-      description: formData.get('description') as string || undefined,
+      description: (formData.get('description') as string) || undefined,
       city_id: parseInt(formData.get('city_id') as string),
-      start_date: formData.get('start_date') as string || undefined,
-      end_date: formData.get('end_date') as string || undefined,
+      start_date: startDate && startDate.trim() ? startDate : undefined,
+      end_date: endDate && endDate.trim() ? endDate : undefined,
     };
 
     // Получаем user_id из localStorage
@@ -108,7 +110,7 @@ export default function CreateTripSection() {
       
       const errorStr = String(error);
       const errorMessage = errorStr.includes('Failed to fetch') || errorStr.includes('NetworkError') || errorStr.includes('ERR_CONNECTION_REFUSED')
-        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8001.'
+        ? 'Ошибка подключения к серверу. Проверьте, что backend сервер запущен.'
         : `Ошибка подключения к серверу: ${errorStr}`;
       setMessage({ type: 'error', text: errorMessage });
       setIsLoading(false);

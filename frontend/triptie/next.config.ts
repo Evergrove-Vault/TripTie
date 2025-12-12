@@ -3,14 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8001/:path*',
-      },
-    ];
-  },
+  // Используем API routes вместо rewrites для более надежного проксирования
 };
 
 export default nextConfig;
