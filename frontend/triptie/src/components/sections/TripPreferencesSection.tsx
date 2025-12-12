@@ -304,6 +304,9 @@ export default function TripPreferencesSection() {
       });
 
       setMessage({ type: 'success', text: 'Предпочтения сохранены!' });
+      
+      // Отправляем событие для обновления объединенных предпочтений
+      window.dispatchEvent(new Event('preferencesUpdated'));
     } catch (error) {
       console.error('Ошибка при сохранении:', error);
       setMessage({ type: 'error', text: 'Ошибка подключения к серверу' });

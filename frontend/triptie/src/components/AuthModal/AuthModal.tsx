@@ -103,7 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       console.error('Ошибка при запросе:', error);
       const errorStr = String(error);
       const errorMessage = errorStr.includes('Failed to fetch') || errorStr.includes('NetworkError')
-        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8001. Запустите: uvicorn backend.main:app --reload --port 8001'
+        ? 'Сервер не запущен. Убедитесь, что backend сервер работает на порту 8000. Запустите: uvicorn backend.main:app --reload --port 8000'
         : `Ошибка подключения к серверу: ${errorStr}`;
       setMessage({ type: 'error', text: errorMessage });
     }

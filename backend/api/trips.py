@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..crud.trips import create_trip, get_user_trips
+from ..crud.trips import create_trip, get_user_trips, get_trip_details
 from ..schemas import TripCreate, Trip
 from database.models.models import Trip as TripModel
 import traceback
@@ -15,24 +15,25 @@ def create_trip_api(
     db: Session = Depends(get_db)
 ):
     try:
-        trip_data = trip.model_dump(exclude_none=True)
+        trip_data = trip.model_dump()
         trip_data['creator_id'] = user_id
         return create_trip(db, trip_data)
     except ValueError as e:
-        # Ошибка валидации (например, пользователь не найден)
-        raise HTTPException(status_code=400, detail=str(e))
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
     except Exception as e:
-        error_trace = traceback.format_exc()
-        print(f"Ошибка при создании поездки: {str(e)}")
-        print(f"Трассировка: {error_trace}")
-        # Извлекаем понятное сообщение об ошибке
-        error_message = str(e)
-        if "ForeignKeyViolation" in error_message or "foreign key" in error_message.lower():
-            if "creator_id" in error_message:
-                error_message = f"Пользователь с ID {user_id} не найден в базе данных"
-            elif "city_id" in error_message:
-                error_message = f"Город с указанным ID не найден в базе данных"
-        raise HTTPException(status_code=400, detail=error_message)
+        from fastapi import HTTPException
+        import traceback
+        error_detail = str(e)
+        print(f"Ошибка при создании поездки: {error_detail}")
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при создании поездки: {error_detail}"
+        )
 
 @router.get("/", response_model=list[Trip])
 def get_trips(
@@ -45,3 +46,27 @@ def get_trips(
     else:
         # Возвращаем все поездки (для совместимости)
         return db.query(TripModel).limit(5).all()
+
+@router.get("/{trip_id}/details")
+def get_trip_details_api(
+    trip_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Получает детальную информацию о поездке, включая:
+    - Информацию о поездке
+    - Информацию о создателе
+    - Информацию о городе
+    - Список участников
+    """
+    try:
+        return get_trip_details(db, trip_id)
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при получении информации о поездке: {str(e)}"
+        )

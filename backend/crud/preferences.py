@@ -7,7 +7,8 @@ from database.models.models import (
     Activity, 
     user_trip_activities,
     trip_members,
-    Trip
+    Trip,
+    User
 )
 
 
@@ -194,11 +195,75 @@ def get_merged_preferences(db: Session, trip_id: int):
     
     unique_activities = list(set([a.name for a in all_activities]))
     
+    # Общее количество участников поездки (включая создателя)
+    total_participants_count = len(member_ids)
+    
     return {
         "trip_id": trip_id,
         "total_budget": total_budget,
         "avg_budget": avg_budget,
         "all_activities": unique_activities,
-        "participants_count": len(all_preferences)
+        "participants_count": len(all_preferences),  # Количество участников с предпочтениями
+        "total_participants_count": total_participants_count  # Общее количество участников
     }
+
+
+def get_all_participants_preferences(db: Session, trip_id: int):
+    """
+    Получает предпочтения всех участников поездки с их именами.
+    Возвращает список предпочтений каждого участника.
+    """
+    # Получаем всех участников поездки (включая создателя)
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise ValueError("Поездка не найдена")
+    
+    # Получаем ID всех участников
+    member_ids = [trip.creator_id]
+    members = db.execute(
+        select(trip_members).where(trip_members.c.trip_id == trip_id)
+    ).fetchall()
+    member_ids.extend([m.user_id for m in members])
+    member_ids = list(set(member_ids))  # Убираем дубликаты
+    
+    # Получаем всех пользователей
+    users = db.query(User).filter(User.id.in_(member_ids)).all()
+    user_dict = {user.id: user for user in users}
+    
+    # Получаем все предпочтения участников
+    all_preferences = db.query(UserTripPreferences).filter(
+        and_(
+            UserTripPreferences.trip_id == trip_id,
+            UserTripPreferences.user_id.in_(member_ids)
+        )
+    ).all()
+    
+    # Формируем результат с именами пользователей
+    result = []
+    for pref in all_preferences:
+        user = user_dict.get(pref.user_id)
+        if not user:
+            continue
+        
+        # Получаем активности пользователя для этой поездки
+        activities = db.query(Activity).join(
+            user_trip_activities,
+            Activity.id == user_trip_activities.c.activity_id
+        ).filter(
+            and_(
+                user_trip_activities.c.user_id == pref.user_id,
+                user_trip_activities.c.trip_id == trip_id
+            )
+        ).all()
+        
+        result.append({
+            "user_id": pref.user_id,
+            "username": user.username,
+            "email": user.email,
+            "budget": pref.budget,
+            "activities": [a.name for a in activities],
+            "is_creator": pref.user_id == trip.creator_id
+        })
+    
+    return result
 
