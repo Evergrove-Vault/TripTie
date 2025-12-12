@@ -1,0 +1,120 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.modalContent {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  width: min(420px, 92vw);
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modalClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+}
+
+.modalClose:hover {
+  color: #333;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.labelText {
+  font-weight: 600;
+  color: #3a3a3d;
+  font-size: 15px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ffd2e7;
+  background: #fff;
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #ff6fb7;
+  box-shadow: 0 0 0 3px rgba(255, 95, 162, 0.25);
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
+  font-size: 16px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(255, 95, 162, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #ff6fb7, #ff4f9c);
+  color: white;
+}
+
+.btn.ghost {
+  background: #fff;
+  color: #ff3f93;
+  border: 1px solid #ffc4df;
+}
+
+.feedback {
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.success {
+  background: #e8f5e9;
+  color: #0a8f5a;
+}
+
+.error {
+  background: #ffebee;
+  color: #d6007a;
+}
