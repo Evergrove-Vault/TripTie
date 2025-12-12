@@ -117,10 +117,13 @@
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .tripCard:hover {
   border-color: #ff6fb7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 111, 183, 0.15);
   box-shadow: 0 4px 12px rgba(255, 95, 162, 0.15);
   transform: translateY(-2px);
 }

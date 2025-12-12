@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './DashboardSection.module.css';
 
@@ -10,9 +11,13 @@ interface Trip {
   join_code: string;
   creator_id: number;
   city_id: number;
+  is_completed?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export default function DashboardSection() {
+  const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'done'>('all');
@@ -74,7 +79,33 @@ export default function DashboardSection() {
     }
   };
 
-  const filteredTrips = trips; // Можно добавить фильтрацию по статусу
+  const filteredTrips = trips.filter((trip) => {
+    if (filter === 'all') return true;
+    if (filter === 'done') return trip.is_completed === true;
+    if (filter === 'active') {
+      // Текущие поездки - не завершенные
+      if (trip.is_completed === true) return false;
+      
+      // Проверяем даты, если они есть
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
+      if (trip.end_date) {
+        const endDate = new Date(trip.end_date);
+        endDate.setHours(0, 0, 0, 0);
+        // Если дата окончания в будущем или сегодня - поездка активна
+        return endDate >= now;
+      }
+      
+      // Если даты нет, но поездка не завершена - считаем активной
+      return !trip.is_completed;
+    }
+    return true;
+  });
+
+  const handleTripClick = (tripId: number) => {
+    router.push(`/plan?trip=${tripId}`);
+  };
 
   return (
     <section id="dashboard" className={styles.card}>
@@ -122,10 +153,23 @@ export default function DashboardSection() {
       ) : (
         <div className={styles.grid}>
           {filteredTrips.map((trip) => (
-            <div key={trip.id} className={styles.tripCard}>
+            <div 
+              key={trip.id} 
+              className={styles.tripCard}
+              onClick={() => handleTripClick(trip.id)}
+            >
               <h3>{trip.name}</h3>
               <p className={styles.tripCode}>Код: {trip.join_code}</p>
-              <p className={styles.tripId}>ID поездки: {trip.id}</p>
+              {trip.is_completed && (
+                <p style={{ 
+                  fontSize: '12px', 
+                  color: '#999', 
+                  marginTop: '8px',
+                  fontStyle: 'italic' 
+                }}>
+                  Завершена
+                </p>
+              )}
             </div>
           ))}
         </div>

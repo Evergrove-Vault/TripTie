@@ -11,4 +11,3 @@ COPY backend/ ./backend/
 RUN chmod +x /app/backend/entrypoint.sh
 
 ENTRYPOINT ["/app/backend/entrypoint.sh"]
-
