@@ -19,19 +19,21 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     volumes:
       - ./database:/app/database:ro
+    depends_on:
+      - db
     environment:
       DATABASE_URL: postgresql://travel_user:password@db:5432/travel_ml
 
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "3000:3000"
     depends_on:
       - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
 
 volumes:
   postgres_data:
