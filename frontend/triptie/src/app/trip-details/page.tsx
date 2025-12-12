@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import styles from './trip-details.module.css';
@@ -51,7 +51,7 @@ interface ParticipantPreference {
   is_creator: boolean;
 }
 
-export default function TripDetailsPage() {
+function TripDetailsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tripId, setTripId] = useState<number | null>(null);
@@ -629,6 +629,23 @@ export default function TripDetailsPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function TripDetailsPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Header />
+        <main style={{ maxWidth: '1200px', margin: '-40px auto 60px', padding: '0 16px' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+            Загрузка информации о поездке...
+          </div>
+        </main>
+      </>
+    }>
+      <TripDetailsContent />
+    </Suspense>
   );
 }
 
