@@ -1,9 +1,9 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import OperationalError, DatabaseError, SQLAlchemyError, IntegrityError
+from ..database import get_db
+from ..crud.participants import join_trip_by_code
 from pydantic import BaseModel
-from database.config.database import get_db
-from crud.participants import join_trip_by_code
 
 router = APIRouter(prefix="/trips", tags=["participants"])
 
@@ -11,10 +11,14 @@ class JoinRequest(BaseModel):
     join_code: str
 
 @router.post("/join")
-def join_trip(request: JoinRequest, db: Session = Depends(get_db)):
+def join_trip(
+    request: JoinRequest,
+    user_id: int = Query(..., description="ID пользователя (временно, в будущем из JWT)"),
+    db: Session = Depends(get_db)
+):
     try:
-        result = join_trip_by_code(db, user_id=2, join_code=request.join_code)
-        return {"status": "Присоединился", "data": result}
+        result = join_trip_by_code(db, user_id=user_id, join_code=request.join_code)
+        return result  # Возвращаем напрямую {"trip_id": ..., "trip_name": ...}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:

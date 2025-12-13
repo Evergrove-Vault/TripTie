@@ -148,3 +148,27 @@ class UserVisitedPlace(Base):
     user = relationship("User", back_populates="visited_places")
     trip = relationship("Trip", back_populates="visited_places")
     place = relationship("Place", back_populates="visited_places")
+
+# Промежуточная таблица для предпочтений пользователей по активностям
+user_trip_activities = Table(
+    'user_trip_activities',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('trip_id', Integer, ForeignKey('trips.id'), primary_key=True),
+    Column('activity_id', Integer, ForeignKey('activities.id'), primary_key=True),
+    Column('created_at', DateTime, default=func.now())
+)
+
+class UserTripPreferences(Base):
+    __tablename__ = "user_trip_preferences"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=False)
+    budget = Column(Float)  # Бюджет пользователя для поездки
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    user = relationship("User")
+    trip = relationship("Trip")
+    # Убираем relationship для activities, так как связь идет через промежуточную таблицу
+    # с user_id и trip_id, а не через id UserTripPreferences

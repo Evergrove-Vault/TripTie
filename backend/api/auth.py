@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, DatabaseError, SQLAlchemyError
-from database.config.database import get_db
-from schemas import UserCreate, UserResponse, UserLogin
-from crud.auth import create_user, check_user_exists, get_user_by_username, verify_password
+from ..database import get_db
+from ..schemas import UserCreate, UserResponse, UserLogin
+from ..crud.auth import create_user, check_user_exists, get_user_by_username, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -19,8 +19,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         # 2. Создать нового пользователя
         db_user = create_user(db, user)
         
-        # 3. Вернуть ответ
-        return db_user
+        # 3. Вернуть ответ (явно создаем UserResponse для надежной сериализации)
+        return UserResponse(
+            id=db_user.id,
+            username=db_user.username,
+            email=db_user.email
+        )
     except HTTPException:
         # Перебрасываем HTTPException как есть
         raise
@@ -79,8 +83,12 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
                 detail="Неверное имя пользователя или пароль"
             )
         
-        # 3. Возвратить данные пользователя
-        return db_user
+        # 3. Возвратить данные пользователя (явно создаем UserResponse для надежной сериализации)
+        return UserResponse(
+            id=db_user.id,
+            username=db_user.username,
+            email=db_user.email
+        )
         
     except HTTPException:
         # Перебрасываем HTTPException как есть

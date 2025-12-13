@@ -1,11 +1,5 @@
-# Основные зависимости
 sqlalchemy==2.0.23
-# psycopg2-binary==2.9.9
 psycopg[binary]==3.1.18
-# alembic==1.13.0
-alembic==1.12.1
 python-dotenv==1.0.0
-
-# Утилиты
-python-multipart==0.0.6
-passlib[bcrypt]==1.7.4  # Для хеширования паролей
+passlib[bcrypt]==1.7.4
+alembic==1.12.1

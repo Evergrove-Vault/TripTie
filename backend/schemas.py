@@ -59,3 +59,32 @@ class Place(PlaceBase):
 
     class Config:
         from_attributes = True
+
+class TripPreferencesCreate(BaseModel):
+    trip_id: int
+    budget: Optional[float] = None
+    activity_names: Optional[list[str]] = None  # Список названий активностей
+
+class TripPreferencesResponse(BaseModel):
+    trip_id: int
+    budget: Optional[float] = None
+    activities: list[str] = []  # Список названий активностей
+    
+    class Config:
+        from_attributes = True
+
+class MergedTripPreferencesResponse(BaseModel):
+    trip_id: int
+    total_budget: Optional[float] = None  # Сумма всех бюджетов
+    avg_budget: Optional[float] = None  # Средний бюджет
+    all_activities: list[str] = []  # Объединенный список всех активностей (уникальные)
+    participants_count: int = 0  # Количество участников, указавших предпочтения
+    total_participants_count: int = 0  # Общее количество участников
+
+class ParticipantPreferencesResponse(BaseModel):
+    user_id: int
+    username: str
+    email: str
+    budget: Optional[float] = None
+    activities: list[str] = []
+    is_creator: bool = False
